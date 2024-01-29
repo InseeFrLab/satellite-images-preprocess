@@ -9,6 +9,7 @@ from tqdm import tqdm
 from classes.filters.filter import Filter
 from functions.download_data import get_raw_images, get_roi
 from functions.labelling import get_labeler
+from utils.mappings import name_dep_to_crs
 from osgeo import gdal
 
 gdal.UseExceptions()
@@ -109,11 +110,20 @@ def main(
             )
         ]
 
-        test = False
+        with open("bb_test.yaml", "r") as file:
+            bbox_test = yaml.load(file, Loader=yaml.FullLoader)
+
         # 6- save dans data-prepro
         for i, lsi in enumerate(splitted_lsi_filtered):
             filename, ext = os.path.splitext(os.path.basename(im))
-            if test:
+            is_test = any(
+                [
+                    lsi.satellite_image.intersects_box(tuple(bbox), crs=name_dep_to_crs[dep])
+                    for bbox in bbox_test[dep]
+                ]
+            )
+
+            if is_test:
                 lsi.satellite_image.to_raster(
                     f"{prepro_test_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}"
                 )
