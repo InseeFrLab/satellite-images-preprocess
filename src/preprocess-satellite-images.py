@@ -110,7 +110,7 @@ def main(
             )
         ]
 
-        with open("bb_test.yaml", "r") as file:
+        with open("src/config/bb_test.yaml", "r") as file:
             bbox_test = yaml.load(file, Loader=yaml.FullLoader)
 
         # 6- save dans data-prepro
