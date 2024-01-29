@@ -48,9 +48,9 @@ def crs_to_gps_image(
     x = float(split_filename[left_bound_index]) * 1000.0  # left
     y = float(split_filename[top_bound_index]) * 1000.0  # top
 
-    str_crs = name_dep_to_crs[split_filepath[3]]
+    crs = name_dep_to_crs[dep]
 
-    transformer = Transformer.from_crs(f"EPSG:{str_crs}", "EPSG:4326", always_xy=True)
+    transformer = Transformer.from_crs(crs, "EPSG:4326", always_xy=True)
     lon, lat = transformer.transform(x, y)
 
     # Return GPS coordinates (latitude, longitude)
@@ -83,7 +83,7 @@ def gps_to_crs_point(
     # Convert GPS coordinates to coordinates in destination coordinate system
     # (CRS)
     transformer = Transformer.from_crs(
-        "EPSG:4326", f"EPSG:{crs}", always_xy=True
+        "EPSG:4326", crs, always_xy=True
     )  # in case the input CRS is of integer type
     x, y = transformer.transform(lon, lat)
     # because y=lat and x=lon, the gps coordinates are in (lat,lon)

@@ -14,13 +14,13 @@ name_dep_to_num_dep = {
 }
 
 name_dep_to_crs = {
-    "GUADELOUPE": "4559",
-    "MARTINIQUE": "4559",
-    "GUYANE": "2972",
-    "REUNION": "2975",
-    "MAYOTTE": "4471",
-    "SAINT-BARTHELEMY": "4559",
-    "SAINT-MARTIN": "4559",
+    "GUADELOUPE": "EPSG:4559",
+    "MARTINIQUE": "EPSG:4559",
+    "GUYANE": "EPSG:2972",
+    "REUNION": "EPSG:2975",
+    "MAYOTTE": "EPSG:4471",
+    "SAINT-BARTHELEMY": "EPSG:4559",
+    "SAINT-MARTIN": "EPSG:4559",
 }
 
 name_dep_to_aoi = {
@@ -58,12 +58,12 @@ name_dep_to_aoi = {
         "west": -62.911495,
         "south": 17.868263,
         "east": -62.786869,
-        "north": 17.963326
-        },
+        "north": 17.963326,
+    },
     "SAINT-MARTIN": {
         "west": -63.163,
         "south": 18.000,
-        "east": -62.986614,
-        "north": 18.129
-        },
+        "east": -62.986,
+        "north": 18.129,
+    },
 }
