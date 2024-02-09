@@ -9,6 +9,7 @@ name_dep_to_num_dep = {
     "GUYANE": "973",
     "REUNION": "974",
     "MAYOTTE": "976",
+    "MAYOTTE_CLEAN": "976",
     "SAINT-BARTHELEMY": "977",
     "SAINT-MARTIN": "978",
 }
@@ -19,6 +20,7 @@ name_dep_to_crs = {
     "GUYANE": "EPSG:2972",
     "REUNION": "EPSG:2975",
     "MAYOTTE": "EPSG:4471",
+    "MAYOTTE_CLEAN": "EPSG:4471",
     "SAINT-BARTHELEMY": "EPSG:4559",
     "SAINT-MARTIN": "EPSG:4559",
 }
@@ -49,6 +51,12 @@ name_dep_to_aoi = {
         "north": -20.852,
     },
     "MAYOTTE": {
+        "west": 45.013633,
+        "south": -13.006619,
+        "east": 45.308891,
+        "north": -12.633022,
+    },
+    "MAYOTTE_CLEAN": {
         "west": 45.013633,
         "south": -13.006619,
         "east": 45.308891,
