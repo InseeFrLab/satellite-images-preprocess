@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT
+
 ### Create a Json file containing credentials fot GCP authentification
 # Declare an array to store the GCP variable names
 declare -a gcp_variables=("GCP_TYPE" "GCP_PROJECT_ID" "GCP_PRIVATE_KEY_ID" "GCP_PRIVATE_KEY" "GCP_CLIENT_EMAIL" "GCP_CLIENT_ID" "GCP_AUTH_URI" "GCP_TOKEN_URI" "GCP_AUTH_PROVIDER" "GCP_CLIENT_CERT")
