@@ -1,4 +1,4 @@
-pre-commit==3.6.0
+pre-commit==3.7.1
 geopandas==0.14.2
 astrovision==0.12.0
 scipy==1.12.0
