@@ -3,6 +3,7 @@ kind: Workflow
 metadata:
   generateName: parallel-preprocessing-
 spec:
+  serviceAccountName: workflow
   entrypoint: main
   arguments:
     parameters:
