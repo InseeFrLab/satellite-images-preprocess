@@ -36,7 +36,7 @@ def main(
     images = get_raw_images(from_s3, source, dep, year)
     prepro_test_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/test/"
     prepro_train_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/train/"
-
+                    f"{prepro_test_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}"
     # Creating empty directories for train and test data
     os.makedirs(
         prepro_test_path,
@@ -46,7 +46,14 @@ def main(
         prepro_train_path,
         exist_ok=True,
     )
-
+    os.makedirs(
+        f"{prepro_test_path.replace('labels', 'patchs')}",
+        exist_ok=True,
+    )
+    os.makedirs(
+        f"{prepro_train_path.replace('labels', 'patchs')}",
+        exist_ok=True,
+    )
     print("\n*** 3- Annotation, découpage et filtrage des images...\n")
 
     # Instanciate a dict of metrics for normalization
