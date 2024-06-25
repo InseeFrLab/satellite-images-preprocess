@@ -45,14 +45,7 @@ def main(
         prepro_train_path,
         exist_ok=True,
     )
-    os.makedirs(
-        f"{prepro_test_path.replace('labels', 'patchs')}",
-        exist_ok=True,
-    )
-    os.makedirs(
-        f"{prepro_train_path.replace('labels', 'patchs')}",
-        exist_ok=True,
-    )
+
     print("\n*** 3- Annotation, découpage et filtrage des images...\n")
 
     # Instanciate a dict of metrics for normalization
