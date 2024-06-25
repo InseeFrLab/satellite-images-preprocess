@@ -34,6 +34,9 @@ spec:
 
             { "src": "PLEIADES", "dep": "REUNION", "year": "2022", "nb_bands": "3", "labeler": "BDTOPO", "task": "segmentation", "tile_size": "250", "from_s3": "0"},
             { "src": "PLEIADES", "dep": "REUNION", "year": "2022", "nb_bands": "3", "labeler": "BDTOPO", "task": "segmentation", "tile_size": "125", "from_s3": "0"}
+
+            { "src": "PLEIADES", "dep": "SAINT-MARTIN", "year": "2024", "nb_bands": "3", "labeler": "BDTOPO", "task": "segmentation", "tile_size": "250", "from_s3": "0"},
+            { "src": "PLEIADES", "dep": "SAINT-MARTIN", "year": "2024", "nb_bands": "3", "labeler": "BDTOPO", "task": "segmentation", "tile_size": "125", "from_s3": "0"}
             ]'
   templates:
     # Entrypoint DAG template
@@ -90,7 +93,7 @@ spec:
           - name: tile_size
           - name: from_s3
       container:
-        image: inseefrlab/satellite-images-preprocess:v0.0.2
+        image: inseefrlab/satellite-images-dev:v0.0.4
         imagePullPolicy: Always
         command: ["/bin/bash", -c]
         args: ["git clone https://github.com/InseeFrLab/satellite-images-preprocess.git &&
