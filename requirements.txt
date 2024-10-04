@@ -2,4 +2,4 @@ pre-commit==3.7.1
 geopandas==1.0.0
 astrovision==0.13.2
 scipy==1.12.0
-ruff==0.4.10
+ruff==0.6.9
