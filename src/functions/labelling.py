@@ -1,4 +1,4 @@
-from classes.labelers.labeler import BDTOPOLabeler
+from classes.labelers.labeler import BDTOPOLabeler, COSIALabeler
 
 
 def get_labeler(type_labeler, year, dep, task):
@@ -20,6 +20,8 @@ def get_labeler(type_labeler, year, dep, task):
     match type_labeler:
         case "BDTOPO":
             labeler = BDTOPOLabeler(year=year, dep=dep, task=task)
+        case "COSIA":
+            labeler = COSIALabeler(year=year, dep=dep, task=task)
         case _:
             pass
     return labeler
