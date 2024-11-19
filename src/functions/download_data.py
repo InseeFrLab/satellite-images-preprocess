@@ -1,14 +1,13 @@
+import concurrent.futures
 import os
-
 import subprocess
-import pandas as pd
-import geopandas as gpd
-from s3fs import S3FileSystem
 from pathlib import Path
 from typing import List, Optional
-from tqdm import tqdm
 
-import concurrent.futures
+import geopandas as gpd
+import pandas as pd
+from s3fs import S3FileSystem
+from tqdm import tqdm
 
 
 def get_file_system() -> S3FileSystem:
@@ -107,7 +106,7 @@ def download_data(
         "mc",
         "cp",
         "-r",
-        f"s3/projet-slums-detection/data-raw/{source}/{dep}/{year}/",  # noqa
+        f"s3/projet-slums-detection/data-raw/{source}/{dep}/{year}/",
         f"{images_path}",
     ]
 
@@ -122,7 +121,7 @@ def load_cosia(
     def list_gpkg_files(base_path: str, filesystem: S3FileSystem) -> List[str]:
         """
         List all GPKG files in the specified path.
-        
+
         Returns:
             List[str]: List of GPKG file paths
         """
@@ -138,10 +137,10 @@ def load_cosia(
     def read_single_file(file_path: str, filesystem: S3FileSystem) -> Optional[gpd.GeoDataFrame]:
         """
         Read a single GPKG file into a GeoDataFrame.
-        
+
         Args:
             file_path (str): Path to the GPKG file
-            
+
         Returns:
             Optional[gpd.GeoDataFrame]: The loaded GeoDataFrame or None if there's an error
         """
@@ -149,49 +148,55 @@ def load_cosia(
         try:
             with filesystem.open(file_path) as f:
                 df = gpd.read_file(f, layer=Path(file_path).stem)
-            
+
             # Add source file information
-            df['source_file'] = Path(file_path).name
+            df["source_file"] = Path(file_path).name
             return df
         except Exception as e:
             print(f"Error reading file {file_path}: {str(e)}")
             return None
 
-    def process_files(base_path: str, filesystem: S3FileSystem, max_workers: int = 4) -> gpd.GeoDataFrame:
+    def process_files(
+        base_path: str, filesystem: S3FileSystem, max_workers: int = 4
+    ) -> gpd.GeoDataFrame:
         """
         Process all GPKG files and concatenate them into a single GeoDataFrame.
-        
+
         Args:
             max_workers (int): Maximum number of concurrent workers for parallel processing
-            
+
         Returns:
             gpd.GeoDataFrame: Concatenated GeoDataFrame
         """
         files = list_gpkg_files(base_path, filesystem)
         dataframes = []
-        
+
         # Process files in parallel with progress bar
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {executor.submit(read_single_file, file, filesystem): file for file in files}
-            
+
             with tqdm(total=len(files), desc="Processing GPKG files") as pbar:
                 for future in concurrent.futures.as_completed(futures):
                     df = future.result()
                     if df is not None:
                         dataframes.append(df)
                     pbar.update(1)
-        
+
         if not dataframes:
             raise ValueError("No valid data frames were created from the input files")
-        
+
         # Concatenate all dataframes
         result = pd.concat(dataframes, ignore_index=True)
         print(f"Successfully concatenated {len(dataframes)} files into a single DataFrame")
         print(f"Final DataFrame shape: {result.shape}")
-        
+
         return result
 
     fs = get_file_system()
 
-    gdf = process_files(f"projet-slums-detection/data-label/COSIA/{dep}/{year}", filesystem=fs, )
+    gdf = process_files(
+        f"projet-slums-detection/data-label/COSIA/{dep}/{year}",
+        filesystem=fs,
+    )
+
     return gdf

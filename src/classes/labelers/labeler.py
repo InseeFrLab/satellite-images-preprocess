@@ -1,6 +1,7 @@
 """
 Labeler classes.
 """
+
 from abc import ABC, abstractmethod
 from typing import List, Tuple
 
@@ -222,3 +223,111 @@ class BDTOPOLabeler(Labeler):
             ]
             label = [bbox for bbox in label if ((bbox[0] != bbox[2]) and (bbox[1] != bbox[3]))]
         return label
+
+
+class COSIALabeler(Labeler):
+    """ """
+
+    def __init__(
+        self,
+        year: str,
+        dep: str,
+        task: str,
+    ):
+        """
+        Constructor.
+
+        Args:
+            labeling_date (datetime): Date of labeling data.
+            dep (Literal): Departement.
+        """
+        super(COSIALabeler, self).__init__(year, dep, task)
+        self.labeling_data = download_data.load_cosia(year=self.year, dep=self.dep)
+        self.labeling_data["bbox"] = self.labeling_data.geometry.apply(lambda geom: geom.bounds)
+        self.label_infos = pd.DataFrame(
+            {
+                "classe": [
+                    "Bâtiment",
+                    "Zone imperméable",
+                    "Zone perméable",
+                    "Piscine",
+                    "Serre",
+                    "Sol nu",
+                    "Surface eau",
+                    "Neige",
+                    "Conifère",
+                    "Feuillu",
+                    "Broussaille",
+                    "Coupe",
+                    "Pelouse",
+                    "Culture",
+                    "Terre labourée",
+                    "Vigne",
+                    "Autre",
+                ],
+                "numero": [i for i in range(17)],
+                "couleur": [
+                    "#CE7079",
+                    "#A6AAB7",
+                    "#987752",
+                    "#62D0FF",
+                    "#B9E2D4",
+                    "#BBB096",
+                    "#3375A1",
+                    "#E9EFFE",
+                    "#216E2E",
+                    "#4C9129",
+                    "#B5C335",
+                    "#E48E4D",
+                    "#8CD76A",
+                    "#DECF55",
+                    "#D0A349",
+                    "#B08290",
+                    "#222222",
+                ],
+            }
+        )
+        self.labeling_data = self.labeling_data.loc[
+            :, [c for c in self.labeling_data.columns if c != "numero"]
+        ].merge(self.label_infos, on="classe")
+
+    def create_segmentation_label(self, satellite_image: SatelliteImage) -> np.array:
+        """
+        Create a segmentation label (mask) with multiple classes from CoSIA data for a SatelliteImage.
+
+        Args:
+            satellite_image (SatelliteImage): Satellite image.
+
+        Returns:
+            np.array: Segmentation mask with class IDs.
+        """
+        if self.labeling_data.crs != satellite_image.crs:
+            self.labeling_data.geometry = self.labeling_data.geometry.to_crs(satellite_image.crs)
+
+        # Filtering geometries within the bounds of the satellite image
+        xmin, ymin, xmax, ymax = satellite_image.bounds
+        patch = self.labeling_data.cx[xmin:xmax, ymin:ymax].copy()
+
+        if patch.empty:
+            # Return a mask filled with zeros (background class ID 0)
+            rasterized = np.zeros(satellite_image.array.shape[1:], dtype=np.uint8)
+        else:
+            # Ensure the patch contains a 'class_id' column
+            if "numero" not in patch.columns:
+                raise ValueError("labeling_data must contain a 'numero' column with class IDs.")
+
+            # Prepare geometries and class IDs for rasterization
+            shapes = ((geom, class_id) for geom, class_id in zip(patch.geometry, patch["numero"]))
+
+            # Rasterize the shapes into a segmentation mask
+            rasterized = rasterize(
+                shapes=shapes,
+                out_shape=satellite_image.array.shape[1:],  # Match satellite image dimensions
+                fill=0,  # Background class ID
+                out=None,
+                transform=satellite_image.transform,
+                all_touched=True,
+                dtype=np.uint8,
+            )
+
+        return rasterized
