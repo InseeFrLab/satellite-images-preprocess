@@ -7,6 +7,7 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
+import requests
 from astrovision.data import SatelliteImage
 from rasterio.features import rasterize
 
@@ -244,49 +245,37 @@ class COSIALabeler(Labeler):
         super(COSIALabeler, self).__init__(year, dep, task)
         self.labeling_data = download_data.load_cosia(year=self.year, dep=self.dep)
         self.labeling_data["bbox"] = self.labeling_data.geometry.apply(lambda geom: geom.bounds)
-        self.label_infos = pd.DataFrame(
-            {
-                "classe": [
-                    "Bâtiment",
-                    "Zone imperméable",
-                    "Zone perméable",
-                    "Piscine",
-                    "Serre",
-                    "Sol nu",
-                    "Surface eau",
-                    "Neige",
-                    "Conifère",
-                    "Feuillu",
-                    "Broussaille",
-                    "Coupe",
-                    "Pelouse",
-                    "Culture",
-                    "Terre labourée",
-                    "Vigne",
-                    "Autre",
-                ],
-                "numero": [i for i in range(17)],
-                "couleur": [
-                    "#CE7079",
-                    "#A6AAB7",
-                    "#987752",
-                    "#62D0FF",
-                    "#B9E2D4",
-                    "#BBB096",
-                    "#3375A1",
-                    "#E9EFFE",
-                    "#216E2E",
-                    "#4C9129",
-                    "#B5C335",
-                    "#E48E4D",
-                    "#8CD76A",
-                    "#DECF55",
-                    "#D0A349",
-                    "#B08290",
-                    "#222222",
-                ],
-            }
+        id2label = (
+            pd.DataFrame.from_dict(
+                requests.get(
+                    "https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/COSIA/cosia-id2label.json"
+                ).json(),
+                orient="index",
+                columns=["classe"],
+            )
+            .reset_index()
+            .rename(columns={"index": "numero"})
         )
+        id2label["couleur"] = [
+            "#CE7079",
+            "#A6AAB7",
+            "#987752",
+            "#62D0FF",
+            "#B9E2D4",
+            "#BBB096",
+            "#3375A1",
+            "#E9EFFE",
+            "#216E2E",
+            "#4C9129",
+            "#B5C335",
+            "#E48E4D",
+            "#8CD76A",
+            "#DECF55",
+            "#D0A349",
+            "#B08290",
+            "#222222",
+        ]
+        self.label_infos = id2label
         self.labeling_data = self.labeling_data.loc[
             :, [c for c in self.labeling_data.columns if c != "numero"]
         ].merge(self.label_infos, on="classe")
