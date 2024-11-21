@@ -1,16 +1,16 @@
 import os
 import sys
-import yaml
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import numpy as np
-from astrovision.data import SatelliteImage, SegmentationLabeledSatelliteImage
+import yaml
+from osgeo import gdal
 from tqdm import tqdm
 
-from classes.filters.filter import Filter
 from functions.download_data import get_raw_images, get_roi
 from functions.labelling import get_labeler
+from functions.process_images import process_single_image
 from utils.mappings import name_dep_to_crs
-from osgeo import gdal
 
 gdal.UseExceptions()
 
@@ -34,6 +34,7 @@ def main(
 
     print("\n*** 2- Récupération des données...\n")
     images = get_raw_images(from_s3, source, dep, year)
+    images = images[:10]
     prepro_test_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/test/"
     prepro_train_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/train/"
     # Creating empty directories for train and test data
@@ -48,99 +49,52 @@ def main(
 
     print("\n*** 3- Annotation, découpage et filtrage des images...\n")
 
+    # Import ROI borders
+    roi = get_roi(dep)
+
     # Instanciate a dict of metrics for normalization
     metrics = {
         "mean": [],
         "std": [],
     }
 
-    for im in tqdm(images):
-        # 1- Ouvrir avec SatelliteImage
-        if int(from_s3):
-            si = SatelliteImage.from_raster(
-                file_path=f"/vsis3/{im}",
-                n_bands=int(n_bands),
-            )
+    # Load bbox_test configuration
+    with open("src/config/bb_test.yaml", "r") as file:
+        bbox_test = yaml.load(file, Loader=yaml.FullLoader)
 
-        else:
-            si = SatelliteImage.from_raster(
-                file_path=im,
-                n_bands=int(n_bands),
-            )
+    metrics = {"mean": [], "std": []}
 
-        # 2- Labeliser avec labeler (labeler/tache)
-        label = labeler.create_label(si)
-        lsi = SegmentationLabeledSatelliteImage(si, label)
+    max_workers = 4
+    # Use ProcessPoolExecutor for parallelization
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit tasks
+        future_to_image = {
+            executor.submit(
+                process_single_image,
+                im,
+                from_s3,
+                n_bands,
+                labeler,
+                tiles_size,
+                source,
+                roi,
+                bbox_test,
+                name_dep_to_crs,
+                dep,
+                prepro_test_path,
+                prepro_train_path,
+            ): im
+            for im in images
+        }
 
-        # 3- Split les tuiles (param tiles_size)
-        splitted_lsi = lsi.split(int(tiles_size))
-
-        # 4- Import ROI borders
-        roi = get_roi(dep)
-
-        # 5- Filtre too black, clouds and ROI
-
-        filter_ = Filter()
-
-        if source == "PLEIADES":
-            is_cloud = filter_.is_cloud(
-                lsi.satellite_image,
-                tiles_size=int(tiles_size),
-                threshold_center=0.7,
-                threshold_full=0.4,
-                min_relative_size=0.0125,
-            )
-        else:
-            is_cloud = [0] * len(splitted_lsi.satellite_image)
-
-        splitted_lsi_filtered = [
-            lsi
-            for lsi, cloud in zip(splitted_lsi, is_cloud)
-            if not (
-                filter_.is_too_black(
-                    lsi.satellite_image, black_value_threshold=25, black_area_threshold=0.5
-                )
-                or cloud
-            )
-            and (
-                lsi.satellite_image.intersects_polygon(
-                    roi.loc[0, "geometry"], crs=lsi.satellite_image.crs
-                )
-            )
-        ]
-
-        with open("src/config/bb_test.yaml", "r") as file:
-            bbox_test = yaml.load(file, Loader=yaml.FullLoader)
-
-        # 6- save dans data-prepro
-        for i, lsi in enumerate(splitted_lsi_filtered):
-            filename, ext = os.path.splitext(os.path.basename(im))
-            is_test = any(
-                [
-                    lsi.satellite_image.intersects_box(tuple(bbox), crs=name_dep_to_crs[dep])
-                    for bbox in bbox_test[dep]
-                ]
-            )
-
-            if is_test:
-                lsi.satellite_image.to_raster(
-                    f"{prepro_test_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}"
-                )
-                np.save(
-                    f"{prepro_test_path}{filename}_{i:04d}.npy",
-                    lsi.label,
-                )
-            else:
-                lsi.satellite_image.to_raster(
-                    f"{prepro_train_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}"
-                )
-                np.save(
-                    f"{prepro_train_path}{filename}_{i:04d}.npy",
-                    lsi.label,
-                )
-                # get mean and std of an image
-                metrics["mean"].append(np.mean(lsi.satellite_image.array, axis=(1, 2)))
-                metrics["std"].append(np.std(lsi.satellite_image.array, axis=(1, 2)))
+        # Collect results as tasks complete
+        for future in tqdm(as_completed(future_to_image), total=len(images)):
+            try:
+                result = future.result()
+                metrics["mean"].extend(result["mean"])
+                metrics["std"].extend(result["std"])
+            except Exception as e:
+                print(f"Error processing image {future_to_image[future]}: {e}")
 
     metrics["mean"] = np.vstack(metrics["mean"]).mean(axis=0).tolist()
     metrics["std"] = np.vstack(metrics["std"]).mean(axis=0).tolist()
