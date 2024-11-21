@@ -1,13 +1,11 @@
 import os
-from osgeo import gdal, osr
-import numpy as np
-import matplotlib.pyplot as plt
+
 import s3fs
-import os
-import astrovision
 from astrovision.data.satellite_image import (
     SatelliteImage,
 )
+from osgeo import gdal
+
 
 # np.unique(satellite_image.array) , O0 no data
 def get_file_system() -> s3fs.S3FileSystem:
@@ -20,16 +18,17 @@ def get_file_system() -> s3fs.S3FileSystem:
         secret=os.environ["AWS_SECRET_ACCESS_KEY"],
     )
 
-fs=get_file_system()
+
+fs = get_file_system()
 # List all your TIFF files
 tif_files = fs.glob("projet-slums-detection/data-raw/PLEIADES/GUYANE/2024/*.tif")
 tif_files = [f"/vsis3/{f}" for f in tif_files]
 
 # Build VRT options
-vrt_options = gdal.BuildVRTOptions(resampleAlg='nearest', addAlpha=False, srcNodata=0, VRTNodata=0)
+vrt_options = gdal.BuildVRTOptions(resampleAlg="nearest", addAlpha=False, srcNodata=0, VRTNodata=0)
 
 # Create the VRT
-vrt_path = 'merged.vrt'
+vrt_path = "merged.vrt"
 vrt = gdal.BuildVRT(vrt_path, tif_files[1:10], options=vrt_options)
 # vrt.FlushCache() pour écrire le fichier
 
@@ -56,7 +55,7 @@ maxx = minx + adjusted_x_size * x_res
 miny = maxy + adjusted_y_size * y_res
 
 output_dir = "/vsis3/projet-slums-detection/tmp"
-#os.makedirs(output_dir, exist_ok=True)
+# os.makedirs(output_dir, exist_ok=True)
 
 for i in range(0, adjusted_x_size, tile_size):
     for j in range(0, adjusted_y_size, tile_size):
@@ -85,8 +84,8 @@ for i in range(0, adjusted_x_size, tile_size):
 # Étape 4 : Nettoyer les ressources
 vrt_ds = None
 
-file_path = 'tiles/tile_6000_22000.tif'
+file_path = "tiles/tile_6000_22000.tif"
 satellite_image = SatelliteImage.from_raster(file_path)
-machin = satellite_image.plot([0,1,2])
-output_path  = "image.png"
+machin = satellite_image.plot([0, 1, 2])
+output_path = "image.png"
 machin.savefig(output_path)
