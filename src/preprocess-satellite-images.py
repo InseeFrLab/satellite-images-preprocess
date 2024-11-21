@@ -33,7 +33,7 @@ def main(
 
     print("\n*** 2- Récupération des données...\n")
     images = get_raw_images(from_s3, source, dep, year)
-    images = images[:100]
+    images = images[:10]
     prepro_test_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/test/"
     prepro_train_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/train/"
     # Creating empty directories for train and test data
@@ -61,7 +61,7 @@ def main(
     with open("src/config/bb_test.yaml", "r") as file:
         bbox_test = yaml.load(file, Loader=yaml.FullLoader)
 
-    max_workers = 20
+    max_workers = 30
     # Use pqdm for parallelization
     args = [
         [
