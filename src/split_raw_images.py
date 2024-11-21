@@ -51,7 +51,7 @@ def list_tif_files(
     Returns:
         List[str]: Complete list of TIFF file paths.
     """
-    path_pattern = f"{bucket}/{base_path}/{sensor}/{department}/{year}/{file_extension}"
+    path_pattern = f"{bucket}/{base_path}/{sensor}/{department}_brut/{year}/{file_extension}"
     tif_files = fs.glob(path_pattern)
     return [f"/vsis3/{f}" for f in tif_files]
 
@@ -149,7 +149,7 @@ department = "GUYANE"
 fs = get_file_system()
 
 # List of TIFF files
-tif_files = list_tif_files(fs, "projet-slums-detection", department, year,base_path="data-raw")
+tif_files = list_tif_files(fs, "projet-slums-detection", department, year,base_path=f"data-raw")
 
 # VRT creation
 vrt = create_vrt(tif_files)
