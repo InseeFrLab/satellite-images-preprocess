@@ -1,11 +1,10 @@
 import os
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import numpy as np
 import yaml
 from osgeo import gdal
-from tqdm import tqdm
+from pqdm.processes import pqdm
 
 from functions.download_data import get_raw_images, get_roi
 from functions.labelling import get_labeler
@@ -34,7 +33,7 @@ def main(
 
     print("\n*** 2- Récupération des données...\n")
     images = get_raw_images(from_s3, source, dep, year)
-    images = images[:10]
+    images = images[:100]
     prepro_test_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/test/"
     prepro_train_path = f"data/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/train/"
     # Creating empty directories for train and test data
@@ -62,42 +61,35 @@ def main(
     with open("src/config/bb_test.yaml", "r") as file:
         bbox_test = yaml.load(file, Loader=yaml.FullLoader)
 
-    metrics = {"mean": [], "std": []}
+    max_workers = 20
+    # Use pqdm for parallelization
+    args = [
+        [
+            im,
+            from_s3,
+            n_bands,
+            labeler,
+            tiles_size,
+            source,
+            roi,
+            bbox_test,
+            name_dep_to_crs,
+            dep,
+            prepro_test_path,
+            prepro_train_path,
+        ]
+        for im in images
+    ]
+    result = pqdm(args, process_single_image, n_jobs=max_workers, argument_type="args")
 
-    max_workers = 4
-    # Use ProcessPoolExecutor for parallelization
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        # Submit tasks
-        future_to_image = {
-            executor.submit(
-                process_single_image,
-                im,
-                from_s3,
-                n_bands,
-                labeler,
-                tiles_size,
-                source,
-                roi,
-                bbox_test,
-                name_dep_to_crs,
-                dep,
-                prepro_test_path,
-                prepro_train_path,
-            ): im
-            for im in images
-        }
-
-        # Collect results as tasks complete
-        for future in tqdm(as_completed(future_to_image), total=len(images)):
-            try:
-                result = future.result()
-                metrics["mean"].extend(result["mean"])
-                metrics["std"].extend(result["std"])
-            except Exception as e:
-                print(f"Error processing image {future_to_image[future]}: {e}")
-
-    metrics["mean"] = np.vstack(metrics["mean"]).mean(axis=0).tolist()
-    metrics["std"] = np.vstack(metrics["std"]).mean(axis=0).tolist()
+    metrics = {
+        key: np.mean(
+            np.stack([array for entry in result if entry[key] for array in entry[key]]), axis=0
+        ).tolist()
+        if any(entry[key] for entry in result)
+        else None
+        for key in ["mean", "std"]
+    }
 
     with open(
         f"{prepro_train_path.replace('labels', 'patchs')}metrics-normalization.yaml", "w"
