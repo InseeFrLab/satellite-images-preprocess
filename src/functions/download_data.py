@@ -111,7 +111,8 @@ def download_data(
     ]
 
     # download raw images
-    subprocess.run(image_cmd, check=True)
+    with open("/dev/null", "w") as devnull:
+        subprocess.run(image_cmd, check=True, stdout=devnull, stderr=devnull)
 
 
 def load_cosia(
