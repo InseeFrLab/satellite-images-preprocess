@@ -1,7 +1,7 @@
 from classes.labelers.labeler import BDTOPOLabeler, COSIALabeler
 
 
-def get_labeler(type_labeler, year, dep, task):
+def get_labeler(type_labeler: str, year: int, dep: str, task: str):
     """
     Get a labeler instance based on the specified type.
 

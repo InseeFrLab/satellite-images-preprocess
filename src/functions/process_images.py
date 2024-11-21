@@ -1,24 +1,26 @@
 import os
 
+import geopandas as gpd
 import numpy as np
 from astrovision.data import SatelliteImage, SegmentationLabeledSatelliteImage
 
 from classes.filters.filter import Filter
+from classes.labelers.labeler import Labeler
 
 
 def process_single_image(
-    im,
+    im: str,
     from_s3: bool,
     n_bands: int,
-    labeler,
+    labeler: Labeler,
     tiles_size: int,
-    source,
-    roi,
-    bbox_test,
-    name_dep_to_crs,
-    dep,
-    prepro_test_path,
-    prepro_train_path,
+    source: str,
+    roi: gpd.GeoDataFrame,
+    bbox_test: dict,
+    name_dep_to_crs: dict,
+    dep: str,
+    prepro_test_path: str,
+    prepro_train_path: str,
 ):
     # 1- Open with SatelliteImage
     if int(from_s3):
