@@ -48,7 +48,7 @@ spec:
         args: [
           "git clone https://github.com/InseeFrLab/satellite-images-preprocess.git &&
            cd satellite-images-preprocess/ &&
-           python src/split_raw_images.py --department {{inputs.parameters.department}} --year {{inputs.parameters.year}} --tile_size {{inputs.parameters.tile_size}} --output_dir {{inputs.parameters.output_dir}} 
+           python src/split_raw_images.py --department {{inputs.parameters.department}} --year {{inputs.parameters.year}} --tile_size {{inputs.parameters.tile_size}} --output_dir {{inputs.parameters.output_dir}}"
         ]
         env:
           - name: AWS_ACCESS_KEY_ID
