@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: guyane-tiling-
+spec:
+  serviceAccountName: workflow
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: department
+        value: GUYANE
+      - name: year
+        value: "2024"
+      - name: tile_size
+        value: "2000"
+      - name: output_dir
+        value: "/vsis3/projet-slums-detection/data-raw/PLEIADES/GUYANE/2024"
+  templates:
+    # Entrypoint DAG template
+    - name: main
+      dag:
+        tasks:
+          - name: run-tiling
+            template: run-tiling-task
+            arguments:
+              parameters:
+                - name: department
+                  value: "{{workflow.parameters.department}}"
+                - name: year
+                  value: "{{workflow.parameters.year}}"
+                - name: tile_size
+                  value: "{{workflow.parameters.tile_size}}"
+                - name: output_dir
+                  value: "{{workflow.parameters.output_dir}}"
+
+    # Worker template
+    - name: run-tiling-task
+      inputs:
+        parameters:
+          - name: department
+          - name: year
+          - name: tile_size
+          - name: output_dir
+      container:
+        image: inseefrlab/satellite-images-dev:v0.0.6
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash", "-c"]
+        args: [
+          "git clone https://github.com/InseeFrLab/satellite-images-preprocess.git &&
+           cd satellite-images-preprocess/ &&
+           python src/split_raw_images.py --department {{inputs.parameters.department}} --year {{inputs.parameters.year}} --tile_size {{inputs.parameters.tile_size}} --output_dir {{inputs.parameters.output_dir}} 
+        ]
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: my-s3-creds
+                key: accessKey
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-s3-creds
+                key: secretKey
+          - name: AWS_DEFAULT_REGION
+            value: us-east-1
+          - name: AWS_S3_ENDPOINT
+            value: minio.lab.sspcloud.fr
