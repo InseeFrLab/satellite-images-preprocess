@@ -1,9 +1,11 @@
-import sys
 import os
-from astrovision.data import SatelliteImage, SegmentationLabeledSatelliteImage
-from functions import download_data, labelling
-import numpy as np
+import sys
+
 import matplotlib.pyplot as plt
+import numpy as np
+from astrovision.data import SatelliteImage, SegmentationLabeledSatelliteImage
+
+from functions import download_data
 
 
 def main(
@@ -14,7 +16,7 @@ def main(
     type_labeler: str,
     task: str,
     tiles_size: int,
-    test: bool = True
+    test: bool = True,
 ):
     """
     Main method.
@@ -25,8 +27,12 @@ def main(
     else:
         dataset = "train"
     fs = download_data.get_file_system()
-    test_image_filepaths = fs.ls(f"projet-slums-detection/data-preprocessed/patchs/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{dataset}/")
-    test_label_filepaths = fs.ls(f"projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{dataset}/")
+    test_image_filepaths = fs.ls(
+        f"projet-slums-detection/data-preprocessed/patchs/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{dataset}/"
+    )
+    test_label_filepaths = fs.ls(
+        f"projet-slums-detection/data-preprocessed/labels/{type_labeler}/{task}/{source}/{dep}/{year}/{tiles_size}/{dataset}/"
+    )
     test_image_filepaths = list(test_image_filepaths)
     test_label_filepaths = list(test_label_filepaths)
     test_image_filepaths.sort()

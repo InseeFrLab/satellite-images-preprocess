@@ -111,7 +111,8 @@ def download_data(
     ]
 
     # download raw images
-    subprocess.run(image_cmd, check=True)
+    with open("/dev/null", "w") as devnull:
+        subprocess.run(image_cmd, check=True, stdout=devnull, stderr=devnull)
 
 
 def load_cosia(
@@ -187,6 +188,8 @@ def load_cosia(
 
         # Concatenate all dataframes
         result = pd.concat(dataframes, ignore_index=True)
+        # Drop rows with missing geometry
+        result.dropna(subset=["geometry"], inplace=True)
         print(f"Successfully concatenated {len(dataframes)} files into a single DataFrame")
         print(f"Final DataFrame shape: {result.shape}")
 

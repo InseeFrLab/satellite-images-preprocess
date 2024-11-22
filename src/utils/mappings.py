@@ -2,7 +2,6 @@
 Mappings.
 """
 
-
 name_dep_to_num_dep = {
     "GUADELOUPE": "971",
     "MARTINIQUE": "972",

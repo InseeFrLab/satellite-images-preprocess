@@ -1,3 +1,5 @@
+from typing import List
+
 import geopandas as gpd
 import numpy as np
 from astrovision.data import SatelliteImage
@@ -5,8 +7,6 @@ from astrovision.data.utils import generate_tiles_borders
 from rasterio.features import rasterize, shapes
 from scipy.ndimage import label
 from shapely.geometry import Polygon
-
-from typing import List
 
 
 class Filter:

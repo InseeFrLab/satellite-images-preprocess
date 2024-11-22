@@ -306,7 +306,9 @@ class COSIALabeler(Labeler):
                 raise ValueError("labeling_data must contain a 'numero' column with class IDs.")
 
             # Prepare geometries and class IDs for rasterization
-            shapes = ((geom, class_id) for geom, class_id in zip(patch.geometry, patch["numero"]))
+            shapes = (
+                (geom, int(class_id)) for geom, class_id in zip(patch.geometry, patch["numero"])
+            )
 
             # Rasterize the shapes into a segmentation mask
             rasterized = rasterize(

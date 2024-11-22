@@ -1,9 +1,11 @@
 import re
-import s3fs
 from typing import List
-from pyproj import Transformer
-from utils.mappings import name_dep_to_crs
+
+import s3fs
 from astrovision.data import SatelliteImage
+from pyproj import Transformer
+
+from utils.mappings import name_dep_to_crs
 
 
 def crs_to_gps_image(

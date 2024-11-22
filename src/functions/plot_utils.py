@@ -1,15 +1,15 @@
 import math
+import re
 
 import matplotlib.pyplot as plt
+import s3fs
 from astrovision.data import SatelliteImage, SegmentationLabeledSatelliteImage
 from tqdm import tqdm
-import re
-import s3fs
 
-from utils.mappings import name_dep_to_crs
 from classes.filters.filter import Filter
 from classes.labelers.labeler import Labeler
-from functions.image_utils import gps_to_crs_point, find_image_of_point
+from functions.image_utils import find_image_of_point, gps_to_crs_point
+from utils.mappings import name_dep_to_crs
 
 
 def plot_list_path_square_cloud(
