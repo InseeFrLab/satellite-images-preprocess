@@ -3,6 +3,7 @@ from typing import List, Optional
 from osgeo import gdal
 import s3fs
 from tqdm import tqdm
+import argparse
 
 def get_file_system(
     endpoint: Optional[str] = None, 
@@ -117,8 +118,6 @@ def tile_raster(
     minx, maxy = gt[0], gt[3]
     maxx = minx + adjusted_x_size * x_res
     miny = maxy + adjusted_y_size * y_res
-
-    os.environ["CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE"] = "YES"
     
     for i in range(0, adjusted_x_size, tile_size):
         for j in range(0, adjusted_y_size, tile_size):
@@ -126,6 +125,8 @@ def tile_raster(
             tile_maxx = tile_minx + tile_size * x_res
             tile_maxy = maxy + j * y_res
             tile_miny = tile_maxy + tile_size * y_res
+
+            # controle no data
 
             output_tile_path = os.path.join(output_dir, f"tile_{i}_{j}.tif")
 
@@ -140,22 +141,43 @@ def tile_raster(
             )
             print(f"Tile generated: {output_tile_path}")
 
-# Variables
-tile_size = 2000
-year = 2024
-department = "GUYANE"
 
-# S3 file system initialization
-fs = get_file_system()
+def main():
+    parser = argparse.ArgumentParser(description="Raster tiling pipeline")
+    parser.add_argument("--department", type=str, required=True, help="Department (e.g., 'GUYANE')")
+    parser.add_argument("--year", type=int, required=True, help="Year (e.g., 2024)")
+    parser.add_argument("--tile_size", type=int, default=2000, help="Tile size in pixels")
+    parser.add_argument("--output_dir", type=str, required=True, help="Output directory for tiles")
+    parser.add_argument("--bucket", type=str, default="projet-slums-detection", help="S3 bucket name")
+    parser.add_argument("--base_path", type=str, default="data-raw", help="Base path for source TIFF files")
+    parser.add_argument("--sensor", type=str, default="PLEIADES", help="Sensor name")
+    args = parser.parse_args()
 
-# List of TIFF files
-tif_files = list_tif_files(fs, "projet-slums-detection", department, year,base_path=f"data-raw")
+    # Set S3 configuration
+    os.environ["CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE"] = "YES"
 
-# VRT creation
-vrt = create_vrt(tif_files)
+    # Initialize S3 file system
+    fs = get_file_system()
 
-# Tile cutting
-tile_raster(vrt, tile_size, f"/vsis3/projet-slums-detection/data-raw/{department}/{year}")
+    # List TIFF files
+    tif_files = list_tif_files(
+        fs, args.bucket, args.department, args.year,
+        base_path=args.base_path, sensor=args.sensor
+    )
 
-# Cleanup
-vrt = None
+    if not tif_files:
+        print("No TIFF files found. Exiting.")
+        return
+
+    # Create VRT
+    vrt = create_vrt(tif_files)
+
+    # Tile cutting
+    tile_raster(vrt, args.tile_size, args.output_dir)
+
+    # Cleanup
+    vrt = None
+    print("Processing completed.")
+
+if __name__ == "__main__":
+    main()
