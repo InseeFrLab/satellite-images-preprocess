@@ -2,10 +2,10 @@ import os
 from typing import List, Optional
 
 import s3fs
-from osgeo import gdal
+from osgeo import gdal, osr
 from tqdm import tqdm
 import argparse
-
+from collections import Counter 
 
 def get_file_system(
     endpoint: Optional[str] = None,
@@ -109,6 +109,7 @@ def get_epsg_list(tif_files: List[str]) -> List[str]:
     """
     epsg_list = []
     for f in tqdm(tif_files, desc="Extraction des EPSG", unit="fichier"):
+      # f = tif_files[0]
         try:
             ds = gdal.Open(f)
             if ds is not None:
@@ -199,6 +200,12 @@ def main():
     # Initialize S3 file system
     fs = get_file_system()
 
+    # tif_files = list_tif_files(
+    #     fs, "projet-slums-detection","GUYANE","2024",
+    #     base_path="data-raw",
+    #     sensor="PLEIADES"
+    # )
+
     # List TIFF files
     tif_files = list_tif_files(
         fs, args.bucket, args.department, args.year,
@@ -211,8 +218,9 @@ def main():
 
     # Par souci de simplification je filtre les EPSG 32622  (84 au total contre 1292 2972)
     # si la chaine decriture marche bien on les modifiera et transformera par la suite en  2972
-            
+         
     liste_epsg = get_epsg_list(tif_files)
+    print(Counter(liste_epsg))
     tif_files = [tif for tif, epsg in zip(tif_files, liste_epsg) if epsg == 'EPSG:2972']
     
     # Create VRT
