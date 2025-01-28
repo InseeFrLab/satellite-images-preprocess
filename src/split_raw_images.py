@@ -137,7 +137,6 @@ def get_epsg_list(tif_files: List[str]) -> List[str]:
     return epsg_list
 
 
-
 def tile_raster(
     ds: gdal.Dataset, tile_size: int = 2000, output_dir: str = "/vsis3/projet-slums-detection/tmp"
 ) -> None:
@@ -156,9 +155,14 @@ def tile_raster(
     adjusted_x_size = ((x_size + tile_size - 1) // tile_size) * tile_size
     adjusted_y_size = ((y_size + tile_size - 1) // tile_size) * tile_size
 
+    x_tiles = adjusted_x_size // tile_size
+    y_tiles = adjusted_y_size // tile_size
+
+    # Calcul des longueurs nécessaires pour les noms
+    x_digits = len(str(x_tiles - 1))  # Nombre de chiffres pour les noms X
+    y_digits = len(str(y_tiles - 1))  # Nombre de chiffres pour les noms Y
+
     minx, maxy = gt[0], gt[3]
-    maxx = minx + adjusted_x_size * x_res
-    miny = maxy + adjusted_y_size * y_res
     
     for i in range(0, adjusted_x_size, tile_size):
         for j in range(0, adjusted_y_size, tile_size):
@@ -167,9 +171,10 @@ def tile_raster(
             tile_maxy = maxy + j * y_res
             tile_miny = tile_maxy + tile_size * y_res
 
-            # controle no data
-
-            output_tile_path = os.path.join(output_dir, f"tile_{i}_{j}.tif")
+            # Génération du nom avec un format aligné
+            i_str = str(i // tile_size).zfill(x_digits)  # Nom aligné pour X
+            j_str = str(j // tile_size).zfill(y_digits)  # Nom aligné pour Y
+            output_tile_path = os.path.join(output_dir, f"tile_{i_str}_{j_str}.tif")
 
             gdal.Translate(
                 output_tile_path,
