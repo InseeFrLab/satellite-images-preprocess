@@ -93,6 +93,50 @@ def create_vrt(
     return vrt
 
 
+
+def get_epsg_list(tif_files: List[str]) -> List[str]:
+    """
+    Récupère les codes EPSG de chaque fichier TIFF dans la liste.
+
+    Args:
+        tif_files (List[str]): Liste des chemins des fichiers TIFF.
+
+    Returns:
+        List[str]: Liste des codes EPSG de chaque fichier.
+                   - Si le fichier ne peut pas être ouvert : "Erreur d'ouverture du fichier"
+                   - Si le CRS n'a pas de code EPSG : "EPSG non défini"
+                   - En cas d'exception : "Erreur: <message d'erreur>"
+    """
+    epsg_list = []
+    for f in tqdm(tif_files, desc="Extraction des EPSG", unit="fichier"):
+        try:
+            ds = gdal.Open(f)
+            if ds is not None:
+                proj = ds.GetProjection()
+                if proj:
+                    srs = osr.SpatialReference()
+                    srs.ImportFromWkt(proj)
+                    # Tente d'obtenir le code EPSG
+                    if srs.IsProjected():
+                        epsg_code = srs.GetAuthorityCode(None)
+                    else:
+                        epsg_code = srs.GetAuthorityCode('GEOGCS')
+                    
+                    if epsg_code:
+                        epsg_list.append(f"EPSG:{epsg_code}")
+                    else:
+                        epsg_list.append("EPSG non défini")
+                else:
+                    epsg_list.append("CRS non défini")
+                ds = None  # Libère les ressources
+            else:
+                epsg_list.append("Erreur d'ouverture du fichier")
+        except Exception as e:
+            epsg_list.append(f"Erreur: {e}")
+    return epsg_list
+
+
+
 def tile_raster(
     ds: gdal.Dataset, tile_size: int = 2000, output_dir: str = "/vsis3/projet-slums-detection/tmp"
 ) -> None:
@@ -165,6 +209,12 @@ def main():
         print("No TIFF files found. Exiting.")
         return
 
+    # Par souci de simplification je filtre les EPSG 32622  (84 au total contre 1292 2972)
+    # si la chaine decriture marche bien on les modifiera et transformera par la suite en  2972
+            
+    liste_epsg = get_epsg_list(tif_files)
+    tif_files = [tif for tif, epsg in zip(tif_files, liste_epsg) if epsg == 'EPSG:2972']
+    
     # Create VRT
     vrt = create_vrt(tif_files)
 
