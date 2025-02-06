@@ -162,3 +162,5 @@ cython_debug/
 
 GCP_credentials.json
 data/
+
+nohup.out
