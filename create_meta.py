@@ -117,10 +117,11 @@ if __name__ == "__main__":
             bounds[file_key] = str(image.bounds)
             crs[file_key] = str(image.crs)
             polygon_image = create_geojson_from_image(image)
-            polygon_wkt = polygon_image.geometry[0].wkt
-            polygon_images[file_key] = polygon_wkt
-            df = pd.concat([df, pd.DataFrame([{'Filepath': file_key, 'Polygon': polygon_wkt}])], ignore_index=True)
-            meta_files.append(file_key)
+            if not polygon_image.empty:
+                polygon_wkt = polygon_image.geometry[0].wkt
+                polygon_images[file_key] = polygon_wkt
+                df = pd.concat([df, pd.DataFrame([{'Filepath': file_key, 'Polygon': polygon_wkt, "CRS": str(image.crs)}])], ignore_index=True)
+                meta_files.append(file_key)
 
     # Enregistrer le fichier parquet avec les polygones
     s3_path = f"""s3://{bucket_name}/data-raw/PLEIADES/GUYANE_brut/polygones_images_brutes_2024.parquet"""
