@@ -16,7 +16,6 @@ The Argo Workflows preprocessing template is located at `argo-workflows/pipeline
 
 ## Develop
 ```shell
-export PROJ_LIB=/opt/conda/share/proj
-conda install -c conda-forge gdal=3.9.3 -y
-pip install -r requirements.txt
+uv sync
+uv run pre-commit install
 ```

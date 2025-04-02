@@ -1,3 +1,31 @@
+[project]
+name = "Satellite-images-preprocess"
+version = "0.1.0"
+description = "Repository for the preprocessing of satellite images for the training of segmentation models."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "astrovision>=0.14.7",
+    "gdal>=3.10.2",
+    "geopandas>=1.0.1",
+    "numpy>=2.2.4",
+    "pqdm>=0.2.0",
+    "requests>=2.32.3",
+    "s3fs>=2025.3.2",
+    "spicy>=0.16.0",
+]
+authors = [
+  {name="Thomas Faria", email="thomas.faria@insee.fr"}
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.0",
+    "pre-commit>=4.2.0",
+]
+
 [tool.ruff]
-line-length = 100
-extend-include = ["*.ipynb"]
+line-length = 130
+
+[tool.uv]
+default-groups = ["dev"]

@@ -5,13 +5,22 @@ import numpy as np
 import yaml
 from osgeo import gdal
 from pqdm.processes import pqdm
-
+os.chdir("satellite-images-preprocess/src")
 from functions.download_data import get_raw_images, get_roi
 from functions.labelling import get_labeler
 from functions.process_images import process_single_image
 from utils.mappings import name_dep_to_crs
 
 gdal.UseExceptions()
+
+source="PLEIADES"
+dep="MAYOTTE"
+year="2023"
+n_bands=3
+type_labeler="COSIA"
+task="segmentation"
+tiles_size=250
+from_s3=0
 
 
 def main(
