@@ -9,8 +9,8 @@ spec:
     parameters:
       - name: preprocessing-conf-list
         value: '[
-            { "src": "PLEIADES", "dep": "MAYOTTE", "year": "2023", "nb_bands": "3", "labeler": "COSIA", "task": "segmentation", "tile_size": "250", "from_s3": "0"}
-            ]'
+          { "src": "PLEIADES", "dep": "MAYOTTE", "year": "2023", "nb_bands": "3", "labeler": "COSIA", "task": "segmentation", "tile_size": "250", "from_s3": "0"}
+          ]'
   templates:
     # Entrypoint DAG template
     - name: main
@@ -53,14 +53,17 @@ spec:
           - name: tile_size
           - name: from_s3
       container:
-        image: inseefrlab/satellite-images-dev:v0.0.6
+        image: inseefrlab/onyxia-vscode-python:py3.12.9
         imagePullPolicy: IfNotPresent
         command: ["/bin/bash", -c]
-        args: ["git clone https://github.com/InseeFrLab/satellite-images-preprocess.git &&
-              cd satellite-images-preprocess/ &&
-              export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
-              python src/preprocess-satellite-images.py {{inputs.parameters.src}} {{inputs.parameters.dep}} {{inputs.parameters.year}} {{inputs.parameters.nb_bands}} {{inputs.parameters.labeler}} {{inputs.parameters.task}} {{inputs.parameters.tile_size}} {{inputs.parameters.from_s3}} &&
-              mc cp -r data/data-preprocessed/ s3/projet-slums-detection/data-preprocessed/"]
+        args:
+          - |
+            git clone https://github.com/InseeFrLab/satellite-images-preprocess.git &&
+            cd satellite-images-preprocess/ &&
+            export MC_HOST_s3=https://$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY@$AWS_S3_ENDPOINT &&
+            uv sync &&
+            uv run src/preprocess-satellite-images.py {{inputs.parameters.src}} {{inputs.parameters.dep}} {{inputs.parameters.year}} {{inputs.parameters.nb_bands}} {{inputs.parameters.labeler}} {{inputs.parameters.task}} {{inputs.parameters.tile_size}} {{inputs.parameters.from_s3}} &&
+            mc cp -r data/data-preprocessed/ s3/projet-slums-detection/data-preprocessed/
         env:
           # env var for s3 connexion
           - name: AWS_ACCESS_KEY_ID
