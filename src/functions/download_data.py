@@ -184,7 +184,7 @@ def load_cosia(
                     pbar.update(1)
 
         if not dataframes:
-            raise ValueError("No valid data frames were created from the input files")
+            raise ValueError("No valid data frames were created from the input files. Make sure label data is available for the specified department and year.")
 
         # Concatenate all dataframes
         result = pd.concat(dataframes, ignore_index=True)
