@@ -58,42 +58,24 @@ def process_single_image(
     splitted_lsi_filtered = [
         lsi
         for lsi, cloud in zip(splitted_lsi, is_cloud)
-        if not (
-            filter_.is_too_black(
-                lsi.satellite_image, black_value_threshold=25, black_area_threshold=0.5
-            )
-            or cloud
-        )
-        and (
-            lsi.satellite_image.intersects_polygon(
-                roi.loc[0, "geometry"], crs=lsi.satellite_image.crs
-            )
-        )
+        if not (filter_.is_too_black(lsi.satellite_image, black_value_threshold=25, black_area_threshold=0.5) or cloud)
+        and (lsi.satellite_image.intersects_polygon(roi.loc[0, "geometry"], crs=lsi.satellite_image.crs))
     ]
 
     # 5- Save filtered tiles to data-prepro
     metrics = {"mean": [], "std": []}
     for i, lsi in enumerate(splitted_lsi_filtered):
         filename, ext = os.path.splitext(os.path.basename(im))
-        is_test = any(
-            [
-                lsi.satellite_image.intersects_box(tuple(bbox), crs=name_dep_to_crs[dep])
-                for bbox in bbox_test[dep]
-            ]
-        )
+        is_test = any([lsi.satellite_image.intersects_box(tuple(bbox), crs=name_dep_to_crs[dep]) for bbox in bbox_test[dep]])
 
         if is_test:
-            lsi.satellite_image.to_raster(
-                f"{prepro_test_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}"
-            )
+            lsi.satellite_image.to_raster(f"{prepro_test_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}")
             np.save(
                 f"{prepro_test_path}{filename}_{i:04d}.npy",
                 lsi.label,
             )
         else:
-            lsi.satellite_image.to_raster(
-                f"{prepro_train_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}"
-            )
+            lsi.satellite_image.to_raster(f"{prepro_train_path.replace('labels', 'patchs')}{filename}_{i:04d}{ext}")
             np.save(
                 f"{prepro_train_path}{filename}_{i:04d}.npy",
                 lsi.label,

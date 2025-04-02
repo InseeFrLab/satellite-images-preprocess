@@ -60,9 +60,7 @@ def plot_list_path_square_cloud(
     # Iterate over the grid of masks and plot them
     for i in range(size):
         for j in range(size):
-            axs[i, j].imshow(
-                list_images[i * size + j].array.transpose(1, 2, 0)[:, :, bands_indices]
-            )
+            axs[i, j].imshow(list_images[i * size + j].array.transpose(1, 2, 0)[:, :, bands_indices])
 
     for i in range(size):
         for j in range(size):
@@ -77,9 +75,7 @@ def plot_list_path_square_cloud(
     return plt.gcf()
 
 
-def plot_square_nb_images_folder_cloud(
-    dep: str, year: str, filter_: Filter, debut: int, fin: int, n_bands: int, fs: s3fs
-):
+def plot_square_nb_images_folder_cloud(dep: str, year: str, filter_: Filter, debut: int, fin: int, n_bands: int, fs: s3fs):
     bands_indices = [i for i in range(int(n_bands))]
 
     list_labeled_image = []
@@ -124,9 +120,7 @@ def plot_square_nb_images_folder_cloud(
     # Iterate over the grid of masks and plot them
     for i in range(size):
         for j in range(size):
-            axs[i, j].imshow(
-                list_images[i * size + j].array.transpose(1, 2, 0)[:, :, bands_indices]
-            )
+            axs[i, j].imshow(list_images[i * size + j].array.transpose(1, 2, 0)[:, :, bands_indices])
 
     for i in range(size):
         for j in range(size):
@@ -231,12 +225,10 @@ def plot_images_mask_around_point(
         # Iterate over the grid of masks and plot them
         for i in range(size):
             for j in range(size):
-                axs[i, j].imshow(
-                    list_images[i * size + j].array.transpose(1, 2, 0)[:, :, bands_indices]
-                )
+                axs[i, j].imshow(list_images[i * size + j].array.transpose(1, 2, 0)[:, :, bands_indices])
                 bounds = list(list_images[i * size + j].bounds)
                 bb_images.append(bounds)
-                axs[i, j].set_title(f"{len(bb_images)-1}")
+                axs[i, j].set_title(f"{len(bb_images) - 1}")
 
         for i in range(size):
             for j in range(size):

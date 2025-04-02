@@ -1,6 +1,3 @@
-# Setup environment
-# source ./setup.sh
-
 # Define parameters
 export SOURCE="PLEIADES"
 export DEPARTMENT="MAYOTTE"
@@ -12,7 +9,7 @@ export TILE_SIZE="250"
 export FROM_S3="1"
 
 # Run preprocessing
-python src/preprocess-satellite-images.py $SOURCE $DEPARTMENT $YEAR $NUMBER_BANDS $LABELER $TASK $TILE_SIZE $FROM_S3
+uv run src/preprocess-satellite-images.py $SOURCE $DEPARTMENT $YEAR $NUMBER_BANDS $LABELER $TASK $TILE_SIZE $FROM_S3
 
 # Save preprocessed data in Minio
-mc cp -r data/data-preprocessed/ s3/projet-slums-detection/data-preprocessed/
+# mc cp -r data/data-preprocessed/ s3/projet-slums-detection/data-preprocessed/

@@ -84,9 +84,7 @@ def gps_to_crs_point(
     """
     # Convert GPS coordinates to coordinates in destination coordinate system
     # (CRS)
-    transformer = Transformer.from_crs(
-        "EPSG:4326", crs, always_xy=True
-    )  # in case the input CRS is of integer type
+    transformer = Transformer.from_crs("EPSG:4326", crs, always_xy=True)  # in case the input CRS is of integer type
     x, y = transformer.transform(lon, lat)
     # because y=lat and x=lon, the gps coordinates are in (lat,lon)
 

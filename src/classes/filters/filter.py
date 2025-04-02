@@ -48,9 +48,7 @@ class Filter:
         # Check if the proportion exceeds the threshold
         return black_pixel_ratio >= black_area_threshold
 
-    def mask_cloud(
-        self, image: SatelliteImage, threshold: float = 0.7, min_relative_size: float = 0.0125
-    ) -> np.ndarray:
+    def mask_cloud(self, image: SatelliteImage, threshold: float = 0.7, min_relative_size: float = 0.0125) -> np.ndarray:
         """
         Generate a cloud mask based on pixel intensity and cluster size.
 
@@ -90,9 +88,7 @@ class Filter:
         elif grayscale.dtype == np.uint16:
             absolute_threshold = threshold * (2**16 - 1)
         else:
-            raise ValueError(
-                f"Unsupported dtype: {grayscale.dtype}. Expected np.uint8 or np.uint16."
-            )
+            raise ValueError(f"Unsupported dtype: {grayscale.dtype}. Expected np.uint8 or np.uint16.")
 
         # Find clusters of white pixels
         labeled, num_features = label(grayscale > absolute_threshold)
@@ -245,6 +241,4 @@ class Filter:
         masks = [mask[rows[0] : rows[1], cols[0] : cols[1]] for rows, cols in indices]
 
         # Return a list of binary values indicating cloud presence in each tile
-        return [
-            1 if np.sum(tile_mask) > np.prod(tile_mask.shape) * 0.5 else 0 for tile_mask in masks
-        ]
+        return [1 if np.sum(tile_mask) > np.prod(tile_mask.shape) * 0.5 else 0 for tile_mask in masks]

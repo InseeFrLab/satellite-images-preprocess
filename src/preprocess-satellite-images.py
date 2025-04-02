@@ -5,22 +5,13 @@ import numpy as np
 import yaml
 from osgeo import gdal
 from pqdm.processes import pqdm
-os.chdir("satellite-images-preprocess/src")
+
 from functions.download_data import get_raw_images, get_roi
 from functions.labelling import get_labeler
 from functions.process_images import process_single_image
 from utils.mappings import name_dep_to_crs
 
 gdal.UseExceptions()
-
-source="PLEIADES"
-dep="MAYOTTE"
-year="2023"
-n_bands=3
-type_labeler="COSIA"
-task="segmentation"
-tiles_size=250
-from_s3=0
 
 
 def main(
@@ -92,17 +83,13 @@ def main(
     result = pqdm(args, process_single_image, n_jobs=max_workers, argument_type="args")
 
     metrics = {
-        key: np.mean(
-            np.stack([array for entry in result if entry[key] for array in entry[key]]), axis=0
-        ).tolist()
+        key: np.mean(np.stack([array for entry in result if entry[key] for array in entry[key]]), axis=0).tolist()
         if any(entry[key] for entry in result)
         else None
         for key in ["mean", "std"]
     }
 
-    with open(
-        f"{prepro_train_path.replace('labels', 'patchs')}metrics-normalization.yaml", "w"
-    ) as f:
+    with open(f"{prepro_train_path.replace('labels', 'patchs')}metrics-normalization.yaml", "w") as f:
         yaml.dump(metrics, f, default_flow_style=False)
 
     print("\n*** 4- Preprocessing terminé !\n")

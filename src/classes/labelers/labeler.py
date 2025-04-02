@@ -37,7 +37,7 @@ class Labeler(ABC):
         self.dep = dep
         self.task = task
         if task not in ["segmentation", "detection"]:
-            raise NotImplementedError("Task must be 'segmentation'" "or 'detection'.")
+            raise NotImplementedError("Task must be 'segmentation'or 'detection'.")
 
     @abstractmethod
     def create_segmentation_label(self, satellite_image: SatelliteImage) -> np.array:
@@ -216,12 +216,8 @@ class BDTOPOLabeler(Labeler):
         if patch.empty:
             label = np.array([], dtype=np.uint8)
         else:
-            label = patch.geometry.apply(
-                self.geometry_to_pixel_bounds, transform=satellite_image.transform
-            ).tolist()
-            label = [
-                tuple(max(min(round(coord), image_height), 0) for coord in bbox) for bbox in label
-            ]
+            label = patch.geometry.apply(self.geometry_to_pixel_bounds, transform=satellite_image.transform).tolist()
+            label = [tuple(max(min(round(coord), image_height), 0) for coord in bbox) for bbox in label]
             label = [bbox for bbox in label if ((bbox[0] != bbox[2]) and (bbox[1] != bbox[3]))]
         return label
 
@@ -247,9 +243,7 @@ class COSIALabeler(Labeler):
         self.labeling_data["bbox"] = self.labeling_data.geometry.apply(lambda geom: geom.bounds)
         id2label = (
             pd.DataFrame.from_dict(
-                requests.get(
-                    "https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/COSIA/cosia-id2label.json"
-                ).json(),
+                requests.get("https://minio.lab.sspcloud.fr/projet-slums-detection/data-label/COSIA/cosia-id2label.json").json(),
                 orient="index",
                 columns=["classe"],
             )
@@ -276,9 +270,9 @@ class COSIALabeler(Labeler):
             "#222222",
         ]
         self.label_infos = id2label
-        self.labeling_data = self.labeling_data.loc[
-            :, [c for c in self.labeling_data.columns if c != "numero"]
-        ].merge(self.label_infos, on="classe")
+        self.labeling_data = self.labeling_data.loc[:, [c for c in self.labeling_data.columns if c != "numero"]].merge(
+            self.label_infos, on="classe"
+        )
 
     def create_segmentation_label(self, satellite_image: SatelliteImage) -> np.array:
         """
@@ -306,9 +300,7 @@ class COSIALabeler(Labeler):
                 raise ValueError("labeling_data must contain a 'numero' column with class IDs.")
 
             # Prepare geometries and class IDs for rasterization
-            shapes = (
-                (geom, int(class_id)) for geom, class_id in zip(patch.geometry, patch["numero"])
-            )
+            shapes = ((geom, int(class_id)) for geom, class_id in zip(patch.geometry, patch["numero"]))
 
             # Rasterize the shapes into a segmentation mask
             rasterized = rasterize(

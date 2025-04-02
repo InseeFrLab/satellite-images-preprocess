@@ -1,11 +1,12 @@
+import argparse
 import os
+from collections import Counter
 from typing import List, Optional
 
 import s3fs
 from osgeo import gdal, osr
 from tqdm import tqdm
-import argparse
-from collections import Counter 
+
 
 def get_file_system(
     endpoint: Optional[str] = None,
@@ -59,9 +60,7 @@ def list_tif_files(
     return [f"/vsis3/{f}" for f in tif_files]
 
 
-def create_vrt(
-    tif_files: List[str], vrt_path: str = "merged.vrt", resample_algo: str = "nearest"
-) -> gdal.Dataset:
+def create_vrt(tif_files: List[str], vrt_path: str = "merged.vrt", resample_algo: str = "nearest") -> gdal.Dataset:
     """
     Create a VRT (Virtual Raster) from TIFF files with progress bar.
 
@@ -93,7 +92,6 @@ def create_vrt(
     return vrt
 
 
-
 def get_epsg_list(tif_files: List[str]) -> List[str]:
     """
     Récupère les codes EPSG de chaque fichier TIFF dans la liste.
@@ -109,7 +107,7 @@ def get_epsg_list(tif_files: List[str]) -> List[str]:
     """
     epsg_list = []
     for f in tqdm(tif_files, desc="Extraction des EPSG", unit="fichier"):
-      # f = tif_files[0]
+        # f = tif_files[0]
         try:
             ds = gdal.Open(f)
             if ds is not None:
@@ -121,8 +119,8 @@ def get_epsg_list(tif_files: List[str]) -> List[str]:
                     if srs.IsProjected():
                         epsg_code = srs.GetAuthorityCode(None)
                     else:
-                        epsg_code = srs.GetAuthorityCode('GEOGCS')
-                    
+                        epsg_code = srs.GetAuthorityCode("GEOGCS")
+
                     if epsg_code:
                         epsg_list.append(f"EPSG:{epsg_code}")
                     else:
@@ -137,9 +135,7 @@ def get_epsg_list(tif_files: List[str]) -> List[str]:
     return epsg_list
 
 
-def tile_raster(
-    ds: gdal.Dataset, tile_size: int = 2000, output_dir: str = "/vsis3/projet-slums-detection/tmp"
-) -> None:
+def tile_raster(ds: gdal.Dataset, tile_size: int = 2000, output_dir: str = "/vsis3/projet-slums-detection/tmp") -> None:
     """
     Cut raster dataset into tiles.
 
@@ -163,7 +159,7 @@ def tile_raster(
     y_digits = len(str(y_tiles - 1))  # Nombre de chiffres pour les noms Y
 
     minx, maxy = gt[0], gt[3]
-    
+
     for i in range(0, adjusted_x_size, tile_size):
         for j in range(0, adjusted_y_size, tile_size):
             tile_minx = minx + i * x_res
@@ -212,10 +208,7 @@ def main():
     # )
 
     # List TIFF files
-    tif_files = list_tif_files(
-        fs, args.bucket, args.department, args.year,
-        base_path=args.base_path, sensor=args.sensor
-    )
+    tif_files = list_tif_files(fs, args.bucket, args.department, args.year, base_path=args.base_path, sensor=args.sensor)
 
     if not tif_files:
         print("No TIFF files found. Exiting.")
@@ -223,11 +216,11 @@ def main():
 
     # Par souci de simplification je filtre les EPSG 32622  (84 au total contre 1292 2972)
     # si la chaine decriture marche bien on les modifiera et transformera par la suite en  2972
-         
+
     liste_epsg = get_epsg_list(tif_files)
     print(Counter(liste_epsg))
-    tif_files = [tif for tif, epsg in zip(tif_files, liste_epsg) if epsg == 'EPSG:2972']
-    
+    tif_files = [tif for tif, epsg in zip(tif_files, liste_epsg) if epsg == "EPSG:2972"]
+
     # Create VRT
     vrt = create_vrt(tif_files)
 
@@ -237,6 +230,7 @@ def main():
     # Cleanup
     vrt = None
     print("Processing completed.")
+
 
 if __name__ == "__main__":
     main()

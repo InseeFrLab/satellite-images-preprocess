@@ -66,7 +66,7 @@ def get_raw_images(
     if int(from_s3):
         fs = get_file_system()
 
-        images = fs.ls((f"projet-slums-detection/data-raw/" f"{source}/{dep}/{year}"))
+        images = fs.ls((f"projet-slums-detection/data-raw/{source}/{dep}/{year}"))
     else:
         images_path = f"data/data-raw/{source}/{dep}/{year}"
         download_data(images_path, source, dep, year)
@@ -157,9 +157,7 @@ def load_cosia(
             print(f"Error reading file {file_path}: {str(e)}")
             return None
 
-    def process_files(
-        base_path: str, filesystem: S3FileSystem, max_workers: int = 4
-    ) -> gpd.GeoDataFrame:
+    def process_files(base_path: str, filesystem: S3FileSystem, max_workers: int = 4) -> gpd.GeoDataFrame:
         """
         Process all GPKG files and concatenate them into a single GeoDataFrame.
 
@@ -184,7 +182,9 @@ def load_cosia(
                     pbar.update(1)
 
         if not dataframes:
-            raise ValueError("No valid data frames were created from the input files. Make sure label data is available for the specified department and year.")
+            raise ValueError(
+                "No valid data frames were created from the input files. Make sure label data is available for the specified department and year."
+            )
 
         # Concatenate all dataframes
         result = pd.concat(dataframes, ignore_index=True)
