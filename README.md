@@ -1,6 +1,6 @@
 # 🛰️ Satellite Image Segmentation – Data Preprocessing Pipeline
 
-This repository provides a preprocessing pipeline for satellite imagery, focused on preparing data for semantic segmentation or object detection tasks. 
+This repository provides a preprocessing pipeline for satellite imagery, focused on preparing data for semantic segmentation or object detection tasks.
 
 It supports:
 - Preparation of semantic segmentation and object detection masks.
