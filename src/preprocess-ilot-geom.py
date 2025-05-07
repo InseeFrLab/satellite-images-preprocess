@@ -34,7 +34,7 @@ def main(filename: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Make clusters geom file from SERN csv file")
-    parser.add_argument("--filename", type=str, required=True, help="Filename (e.g.,  's3://projet-slums-detection/geometry_ilots_mars_2025.csv')")
+    parser.add_argument("--filename", type=str, required=True, help="Filename (e.g.,  's3://projet-slums-detection/cluster-geom-raw/geometry_ilots_mars_2025.csv')")
     args = parser.parse_args()
 
     filename = args.filename
