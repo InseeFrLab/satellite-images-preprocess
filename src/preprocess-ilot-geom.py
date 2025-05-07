@@ -23,16 +23,14 @@ def main(folder_zip_path: str):
     num_dep_to_name_dep = {v: k for k, v in name_dep_to_num_dep.items()}
     gdf["dep"] = gdf["depcom_2018"].astype(str).str[:3].map(num_dep_to_name_dep)
 
-    gdf = gdf[
-        ~gdf.geometry.is_empty &
-        gdf.geometry.notna() &
-        gdf.geometry.is_valid
-    ]
+    gdf = gdf[~gdf.geometry.is_empty].reset_index(drop=True)
+    gdf = gdf[gdf.is_valid].reset_index(drop=True)
+    gdf = gdf[gdf.notna()].reset_index(drop=True)
 
-    gdf["geometry"] = gdf["geometry"].apply(lambda geom: geom.wkt if geom else None)
+    arrow_table = gdf.to_arrow(index=None, geometry_encoding='WKB')
 
     # Convertir en table pyarrow
-    table = pa.Table.from_pandas(gdf, preserve_index=False)
+    table = pa.table(arrow_table)
 
     # Écriture du dataset partitionné
     ds.write_dataset(
@@ -51,4 +49,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     folder_zip_path = args.folder_zip_path
+    folder_zip_path = 's3://projet-slums-detection/cluster-geom-raw/couche_ilots_mars_2025.zip'
     main(folder_zip_path)
