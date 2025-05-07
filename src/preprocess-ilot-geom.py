@@ -3,26 +3,25 @@ import geopandas as gpd
 import pandas as pd
 from shapely import wkt
 import argparse
+import fsspec
 
 from utils.mappings import name_dep_to_num_dep
 
 
-def main(filename: str):
+def main(folder_zip_path: str):
     fs = get_file_system()
-    with fs.open(filename, mode='r') as f:
-        df = pd.read_csv(f)
 
-    df = df.rename(columns={
-            'geom': 'geometry',
+    with fs.open(folder_zip_path, 'rb') as f:
+        gdf = gpd.read_file(f)
+
+    gdf = gdf.rename(columns={
             'id_zone': 'code',
             'depcom': 'depcom_2018'
         }
     )
 
-    df["geometry"] = df["geometry"].apply(wkt.loads)
-    df["ident_ilot"] = df["depcom_2018"].astype(str) + df["code"].astype(str)
-    df["dep"] = df["depcom_2018"].astype(str).str[:3]
-    gdf = gpd.GeoDataFrame(df, geometry="geometry", crs="EPSG:4326")
+    gdf["ident_ilot"] = gdf["depcom_2018"].astype(str) + gdf["code"].astype(str)
+    gdf["dep"] = gdf["depcom_2018"].astype(str).str[:3]
     gdfs_per_dep = {dep: gdf[gdf["dep"] == dep] for dep in gdf["dep"].unique()}
 
     for name_dep, num_dep in name_dep_to_num_dep.items():
@@ -35,8 +34,8 @@ def main(filename: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Make clusters geom file from SERN csv file")
-    parser.add_argument("--filename", type=str, required=True, help="Filename (e.g.,  's3://projet-slums-detection/cluster-geom-raw/geometry_ilots_mars_2025.csv')")
+    parser.add_argument("--folder_zip_path", type=str, required=True, help="Folder zip path (e.g., 's3://projet-slums-detection/cluster-geom-raw/couche_ilots_mars_2025.zip')")
     args = parser.parse_args()
 
-    filename = args.filename
-    main(filename)
+    folder_zip_path = args.folder_zip_path
+    main(folder_zip_path)
