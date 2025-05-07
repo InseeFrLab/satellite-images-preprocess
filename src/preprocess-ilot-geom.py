@@ -22,14 +22,15 @@ def main(filename: str):
     df["geometry"] = df["geometry"].apply(wkt.loads)
     df["ident_ilot"] = df["depcom_2018"].astype(str) + df["code"].astype(str)
     df["dep"] = df["depcom_2018"].astype(str).str[:3]
-    gdf = gpd.GeoDataFrame(df, geometry="geometry")
+    gdf = gpd.GeoDataFrame(df, geometry="geometry", crs="EPSG:4326")
     gdfs_per_dep = {dep: gdf[gdf["dep"] == dep] for dep in gdf["dep"].unique()}
 
     for name_dep, num_dep in name_dep_to_num_dep.items():
         if num_dep in gdfs_per_dep.keys():
             gdf_to_save = gdfs_per_dep[num_dep]
+            gdf_to_save = gdf_to_save.drop(columns=['dep'])
             filename_to_save = f"s3://projet-slums-detection/data-clusters/dep={name_dep}/part-0.parquet"
-            gdf_to_save.to_parquet(filename_to_save, filesystem=fs)
+            gdf_to_save.to_parquet(filename_to_save, index=False, filesystem=fs)
 
 
 if __name__ == "__main__":
