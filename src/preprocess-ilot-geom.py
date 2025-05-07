@@ -1,9 +1,8 @@
 from functions.download_data import get_file_system
 import geopandas as gpd
-import pandas as pd
-from shapely import wkt
 import argparse
-import fsspec
+import pyarrow as pa
+import pyarrow.dataset as ds
 
 from utils.mappings import name_dep_to_num_dep
 
@@ -21,15 +20,29 @@ def main(folder_zip_path: str):
     )
 
     gdf["ident_ilot"] = gdf["depcom_2018"].astype(str) + gdf["code"].astype(str)
-    gdf["dep"] = gdf["depcom_2018"].astype(str).str[:3]
-    gdfs_per_dep = {dep: gdf[gdf["dep"] == dep] for dep in gdf["dep"].unique()}
+    num_dep_to_name_dep = {v: k for k, v in name_dep_to_num_dep.items()}
+    gdf["dep"] = gdf["depcom_2018"].astype(str).str[:3].map(num_dep_to_name_dep)
 
-    for name_dep, num_dep in name_dep_to_num_dep.items():
-        if num_dep in gdfs_per_dep.keys():
-            gdf_to_save = gdfs_per_dep[num_dep]
-            gdf_to_save = gdf_to_save.drop(columns=['dep'])
-            filename_to_save = f"s3://projet-slums-detection/data-clusters/dep={name_dep}/part-0.parquet"
-            gdf_to_save.to_parquet(filename_to_save, index=False, filesystem=fs)
+    gdf = gdf[
+        ~gdf.geometry.is_empty &
+        gdf.geometry.notna() &
+        gdf.geometry.is_valid
+    ]
+
+    gdf["geometry"] = gdf["geometry"].apply(lambda geom: geom.wkt if geom else None)
+
+    # Convertir en table pyarrow
+    table = pa.Table.from_pandas(gdf, preserve_index=False)
+
+    # Écriture du dataset partitionné
+    ds.write_dataset(
+        table,
+        base_dir="s3://projet-slums-detection/data-clusters/",
+        format="parquet",
+        partitioning=["dep"],
+        filesystem=fs,
+        existing_data_behavior="overwrite_or_ignore"
+    )
 
 
 if __name__ == "__main__":
